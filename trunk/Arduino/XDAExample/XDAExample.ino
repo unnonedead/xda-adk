@@ -32,12 +32,10 @@ void setup() {
 
 void loop() {
    for (int Pin=0; Pin < LEDCount; Pin++)  {  
-     pinMode(LEDPin[Pin], OUTPUT);          
      digitalWrite(LEDPin[Pin], HIGH);         //Turn the LED on
      delay(50);
    }
-      for (int Pin=0; Pin < LEDCount; Pin++)  {  
-     pinMode(LEDPin[Pin], OUTPUT);          
+   for (int Pin=0; Pin < LEDCount; Pin++)  {  
      delay(50);
      digitalWrite(LEDPin[Pin], LOW);          //Turn the LED back off
    }
