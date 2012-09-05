@@ -39,7 +39,6 @@ public class XdasdkActivity extends Activity {
         
         button1.setOnClickListener(new View.OnClickListener() {
 			
-			@Override
 			public void onClick(View v) {
 				String command[]={"su", "-c",  "ls /data"};
 				Shell shell = new Shell();
