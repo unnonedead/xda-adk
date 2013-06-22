@@ -17,16 +17,24 @@
 
 package tv.xda.noter;
 
-import android.os.Bundle;
+
+
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
+import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.google.android.apps.adk2.BTDeviceListActivity;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -36,10 +44,14 @@ import java.io.FileReader;
 import java.io.IOException;
 
 public class MainActivity extends Activity implements OnClickListener {
-
+    String mMenuButton;
     TextView mTextOutput;
     EditText mTextInput;
     final static String FILENAME = "notes.txt";
+    static final int PICK_BLUETOOTH= 0;
+    String mBluetoothDataOut="XDATV";
+
+    boolean mConnectionCommanded=false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,12 +68,14 @@ public class MainActivity extends Activity implements OnClickListener {
         File f = new File(getFilesDir(), FILENAME);
         try {
             BufferedReader br = new BufferedReader(new FileReader(f));
-
             String line;
             while ((line = br.readLine()) != null) {
                 mTextOutput.setText(line + "\n" + mTextOutput.getText());
             }
             br.close();
+            
+
+         
         } catch (FileNotFoundException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -80,6 +94,10 @@ public class MainActivity extends Activity implements OnClickListener {
         mTextOutput = (TextView) findViewById(R.id.textView);
         mTextInput = (EditText) findViewById(R.id.textInput);
         mTextOutput.setMovementMethod(new ScrollingMovementMethod());
+        
+        mTextOutput.setOnClickListener(this); //if textView is touched
+        
+        
     }
 
     /*
@@ -87,7 +105,7 @@ public class MainActivity extends Activity implements OnClickListener {
      */
     @Override
     public void onClick(View v) { // view handler
-        if (v.getId() == R.id.save) {
+        if (v.getId() == R.id.save) { 
             doSaveButtonPress();
         }
     }
@@ -99,6 +117,13 @@ public class MainActivity extends Activity implements OnClickListener {
         String text = mTextInput.getText().toString();
         mTextInput.setText("");
         mTextOutput.setText(text + "\n" + mTextOutput.getText().toString());
+        
+        //bluetooth send data if connection was commanded
+        mBluetoothDataOut=text;
+        if (mConnectionCommanded){ //false by default until turned on
+            sendBluetoothData(); 
+        }
+        
         try {
             FileOutputStream fo = openFileOutput(FILENAME, Context.MODE_APPEND);
             fo.write(text.getBytes());
@@ -109,6 +134,51 @@ public class MainActivity extends Activity implements OnClickListener {
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.main, menu);
+        return true;
+    }
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle item selection
+        switch (item.getItemId()) {
+            case R.id.connect_bluetooth:  //bluetooth connection button
+                mConnectionCommanded=true;   //we want connection now
+                NoterADKConnectivity.BluetoothSerialConnection=null; //reset the connection
+                connectToBluetoothDevice(); //connect to device
+                return true;
+            default:
+                return true;
+        }
+    }
+    
+    /*
+     * sends bluetooth data
+     */
+    private void sendBluetoothData() { 
+        if (NoterADKConnectivity.BluetoothSerialConnection!=null && mBluetoothDataOut!=""){  //only if connected and have data to send
+            //Command 17 is the scroller
+            Log.v("ADKReturn",new NoterADKConnectivity().sendCommand(17, 17, mBluetoothDataOut.getBytes()).toString());
+        }
+    }
+    /*
+     * Connects to bluetooth or provides options
+     */
+    private void connectToBluetoothDevice(){
+        NoterADKConnectivity.BluetoothSerialConnection=null;
+        startActivityForResult(new Intent(this, BTDeviceListActivity.class),PICK_BLUETOOTH);
+    }
+    
+
+    //performs actions when return from result. 
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == PICK_BLUETOOTH) {
+            sendBluetoothData(); //on connect
         }
     }
 }
