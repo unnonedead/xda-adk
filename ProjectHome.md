@@ -1,0 +1,1 @@
+This is a repository for materials used on XDATV for demonstration of Android applications and hardware design.
